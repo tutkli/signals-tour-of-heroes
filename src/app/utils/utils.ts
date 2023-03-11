@@ -13,7 +13,7 @@ export function fromObservable<T>(
         sub.unsubscribe();
     });
 
-    return sig.bind(sig);
+    return sig;
 }
 
 export function fromSignal<T>(source: Signal<T>): Observable<T> {
