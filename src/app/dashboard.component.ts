@@ -5,6 +5,7 @@ import {RouterLink} from "@angular/router";
 import {HeroSearchComponent} from "./components/hero-search.component";
 import {fromObservable} from "./utils/utils";
 
+
 @Component({
     selector: 'app-dashboard',
     standalone: true,
