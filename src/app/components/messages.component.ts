@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {MessageService} from "../services/message.service";
 import {NgForOf, NgIf} from "@angular/common";
 
@@ -10,12 +10,12 @@ import {NgForOf, NgIf} from "@angular/common";
         NgForOf
     ],
     template: `
-        <div *ngIf="messageService.messages.length">
+        <div *ngIf="messageService.messages().length">
             <h2>Messages</h2>
             <button type="button" class="clear"
                     (click)="messageService.clear()">Clear messages
             </button>
-            <div *ngFor='let message of messageService.messages'> {{message}} </div>
+            <div *ngFor='let message of messageService.messages()'> {{message}} </div>
         </div>
     `,
     styles: [`
@@ -42,6 +42,5 @@ import {NgForOf, NgIf} from "@angular/common";
     `],
 })
 export class MessagesComponent {
-    constructor(public messageService: MessageService) {
-    }
+    public messageService = inject(MessageService);
 }

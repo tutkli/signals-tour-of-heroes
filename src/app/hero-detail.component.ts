@@ -1,9 +1,10 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {Location, NgIf, UpperCasePipe} from "@angular/common";
 import {FormsModule} from "@angular/forms";
 import {HeroService} from "./services/hero.service";
 import {ActivatedRoute} from "@angular/router";
 import {Hero} from "./models/hero.model";
+import {fromObservable} from "./utils/utils";
 
 @Component({
     selector: 'app-hero-detail',
@@ -14,15 +15,15 @@ import {Hero} from "./models/hero.model";
         UpperCasePipe,
     ],
     template: `
-        <div *ngIf="hero">
+        <div *ngIf="hero() as hero">
             <h2>{{hero.name | uppercase}} Details</h2>
             <div><span>id: </span>{{hero.id}}</div>
             <div>
                 <label for="hero-name">Hero name: </label>
                 <input id="hero-name" [(ngModel)]="hero.name" placeholder="Hero name"/>
             </div>
-            <button type="button" (click)="goBack()">go back</button>
-            <button type="button" (click)="save()">save</button>
+            <button type="button" (click)="goBack()">Go back</button>
+            <button type="button" (click)="save()">Save</button>
         </div>
     `,
     styles: [`
@@ -57,33 +58,20 @@ import {Hero} from "./models/hero.model";
       }
     `],
 })
-export default class HeroDetailComponent implements OnInit {
-    hero: Hero | undefined;
+export default class HeroDetailComponent {
+    private activatedRoute = inject(ActivatedRoute);
+    private heroService = inject(HeroService);
+    private location = inject(Location);
 
-    constructor(
-        private route: ActivatedRoute,
-        private heroService: HeroService,
-        private location: Location
-    ) {
-    }
-
-    ngOnInit(): void {
-        this.getHero();
-    }
-
-    getHero(): void {
-        const id = parseInt(this.route.snapshot.paramMap.get('id')!, 10);
-        this.heroService.getHero(id)
-            .subscribe(hero => this.hero = hero);
-    }
+    hero = fromObservable(this.heroService.getHero(Number(this.activatedRoute.snapshot.paramMap.get('id'))), undefined);
 
     goBack(): void {
         this.location.back();
     }
 
     save(): void {
-        if (this.hero) {
-            this.heroService.updateHero(this.hero)
+        if (this.hero()) {
+            this.heroService.updateHero(this.hero() as Hero)
                 .subscribe(() => this.goBack());
         }
     }

@@ -1,8 +1,9 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {NgForOf} from "@angular/common";
 import {HeroService} from "./services/hero.service";
 import {RouterLink} from "@angular/router";
 import {Hero} from "./models/hero.model";
+import {fromObservable} from "./utils/utils";
 
 @Component({
     selector: 'app-heroes',
@@ -24,7 +25,7 @@ import {Hero} from "./models/hero.model";
         </div>
 
         <ul class="heroes">
-            <li *ngFor="let hero of heroes">
+            <li *ngFor="let hero of heroes()">
                 <a routerLink="/detail/{{hero.id}}">
                     <span class="badge">{{hero.id}}</span> {{hero.name}}
                 </a>
@@ -127,20 +128,10 @@ import {Hero} from "./models/hero.model";
       }
     `],
 })
-export default class HeroesComponent implements OnInit {
-    heroes: Hero[] = [];
+export default class HeroesComponent {
+    private heroService = inject(HeroService);
 
-    constructor(private heroService: HeroService) {
-    }
-
-    ngOnInit(): void {
-        this.getHeroes();
-    }
-
-    getHeroes(): void {
-        this.heroService.getHeroes()
-            .subscribe(heroes => this.heroes = heroes);
-    }
+    heroes = fromObservable(this.heroService.getHeroes(), []);
 
     add(name: string): void {
         name = name.trim();
@@ -149,12 +140,11 @@ export default class HeroesComponent implements OnInit {
         }
         this.heroService.addHero({name} as Hero)
             .subscribe(hero => {
-                this.heroes.push(hero);
+                this.heroes.update((heroes) => [...heroes, hero]);
             });
     }
 
     delete(hero: Hero): void {
-        this.heroes = this.heroes.filter(h => h !== hero);
-        this.heroService.deleteHero(hero.id).subscribe();
+        this.heroService.deleteHero(hero.id).subscribe(_ => this.heroes.update(heroes => heroes.filter(h => h.id !== hero.id)));
     }
 }

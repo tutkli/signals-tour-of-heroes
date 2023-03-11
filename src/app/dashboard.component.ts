@@ -1,9 +1,9 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, computed, inject} from '@angular/core';
 import {NgForOf} from "@angular/common";
 import {HeroService} from "./services/hero.service";
-import {Hero} from "./models/hero.model";
 import {RouterLink} from "@angular/router";
 import {HeroSearchComponent} from "./components/hero-search.component";
+import {fromObservable} from "./utils/utils";
 
 @Component({
     selector: 'app-dashboard',
@@ -16,7 +16,7 @@ import {HeroSearchComponent} from "./components/hero-search.component";
     template: `
         <h2>Top Heroes</h2>
         <div class="heroes-menu">
-            <a *ngFor="let hero of heroes"
+            <a *ngFor="let hero of topHeroes()"
                routerLink="/detail/{{hero.id}}">
                 {{hero.name}}
             </a>
@@ -76,18 +76,9 @@ import {HeroSearchComponent} from "./components/hero-search.component";
       }
     `]
 })
-export default class DashboardComponent implements OnInit {
-    heroes: Hero[] = [];
+export default class DashboardComponent {
+    private heroService = inject(HeroService);
 
-    constructor(private heroService: HeroService) {
-    }
-
-    ngOnInit(): void {
-        this.getHeroes();
-    }
-
-    getHeroes(): void {
-        this.heroService.getHeroes()
-            .subscribe(heroes => this.heroes = heroes.slice(1, 5));
-    }
+    heroes = fromObservable(this.heroService.getHeroes(), []);
+    topHeroes = computed(() => this.heroes().slice(1, 5));
 }

@@ -1,10 +1,9 @@
-import {Component, OnInit} from '@angular/core';
-import {Observable, Subject} from 'rxjs';
+import {Component, inject, signal} from '@angular/core';
 import {debounceTime, distinctUntilChanged, switchMap} from 'rxjs/operators';
-import {Hero} from "../models/hero.model";
 import {HeroService} from "../services/hero.service";
 import {AsyncPipe, NgForOf} from "@angular/common";
 import {RouterLink} from "@angular/router";
+import {fromSignal} from "../utils/utils";
 
 @Component({
     selector: 'app-hero-search',
@@ -17,7 +16,7 @@ import {RouterLink} from "@angular/router";
     template: `
         <div id="search-component">
             <label for="search-box">Hero Search</label>
-            <input #searchBox id="search-box" (input)="search(searchBox.value)"/>
+            <input #searchBox id="search-box" (input)="searchTerms.set(searchBox.value)"/>
 
             <ul class="search-result">
                 <li *ngFor="let hero of heroes$ | async">
@@ -77,30 +76,15 @@ import {RouterLink} from "@angular/router";
         margin-top: 0;
         padding-left: 0;
       }
-    `],
+    `]
 })
-export class HeroSearchComponent implements OnInit {
-    heroes$!: Observable<Hero[]>;
-    private searchTerms = new Subject<string>();
+export class HeroSearchComponent {
+    private heroService = inject(HeroService);
 
-    constructor(private heroService: HeroService) {
-    }
-
-    // Push a search term into the observable stream.
-    search(term: string): void {
-        this.searchTerms.next(term);
-    }
-
-    ngOnInit(): void {
-        this.heroes$ = this.searchTerms.pipe(
-            // wait 300ms after each keystroke before considering the term
-            debounceTime(300),
-
-            // ignore new term if same as previous term
-            distinctUntilChanged(),
-
-            // switch to new search observable each time the term changes
-            switchMap((term: string) => this.heroService.searchHeroes(term)),
-        );
-    }
+    searchTerms = signal<string>('');
+    heroes$ = fromSignal(this.searchTerms).pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap((term: string) => this.heroService.searchHeroes(term)),
+    );
 }
